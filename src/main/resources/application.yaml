@@ -1,3 +1,10 @@
 spring:
   application:
     name: miniconnect
+  datasource:
+    url: jdbc:postgresql://localhost:5432/miniconnect
+    username: postgres
+    password: admin
+  jpa:
+    hibernate:
+      ddl-auto: update
