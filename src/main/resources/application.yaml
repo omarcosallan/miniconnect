@@ -8,3 +8,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+  miniconnect:
+    app:
+      jwtCookieName: miniconnectapp
+      jwtExpirationMs: 3000000
+      jwtSecret: mySecretKey123912738aopsgjnspkmndfsopkvajoirjg94gf2opfng2moknm
