@@ -2,6 +2,8 @@ package dev.marcos.miniconnect.service;
 
 import dev.marcos.miniconnect.dto.LoginRequest;
 import dev.marcos.miniconnect.dto.RegisterRequest;
+import dev.marcos.miniconnect.dto.UserResponseDTO;
+import dev.marcos.miniconnect.exception.ResourceAlreadyExistsException;
 import dev.marcos.miniconnect.model.User;
 import dev.marcos.miniconnect.repository.UserRepository;
 import dev.marcos.miniconnect.security.jwt.JwtUtils;
@@ -17,8 +19,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -28,9 +28,9 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
-    public void register(RegisterRequest request) {
+    public UserResponseDTO register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Erro: Email já está em uso!");
+            throw new ResourceAlreadyExistsException("O email informado já está em uso!");
         }
 
         User user = new User();
@@ -39,6 +39,8 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.password()));
 
         userRepository.save(user);
+
+        return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getBio(), user.getBirthDate());
     }
 
     public ResponseCookie login(LoginRequest request) {
