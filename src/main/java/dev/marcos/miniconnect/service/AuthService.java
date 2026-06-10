@@ -1,7 +1,7 @@
 package dev.marcos.miniconnect.service;
 
-import dev.marcos.miniconnect.dto.LoginRequest;
-import dev.marcos.miniconnect.dto.RegisterRequest;
+import dev.marcos.miniconnect.dto.LoginRequestDTO;
+import dev.marcos.miniconnect.dto.RegisterRequestDTO;
 import dev.marcos.miniconnect.dto.UserResponseDTO;
 import dev.marcos.miniconnect.exception.ResourceAlreadyExistsException;
 import dev.marcos.miniconnect.model.User;
@@ -28,7 +28,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
-    public UserResponseDTO register(RegisterRequest request) {
+    public UserResponseDTO register(RegisterRequestDTO request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new ResourceAlreadyExistsException("O email informado já está em uso!");
         }
@@ -43,7 +43,7 @@ public class AuthService {
         return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getBio(), user.getBirthDate());
     }
 
-    public ResponseCookie login(LoginRequest request) {
+    public ResponseCookie login(LoginRequestDTO request) {
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
