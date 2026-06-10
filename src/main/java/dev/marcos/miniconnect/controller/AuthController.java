@@ -1,9 +1,12 @@
 package dev.marcos.miniconnect.controller;
 
+import dev.marcos.miniconnect.dto.AuthCookies;
 import dev.marcos.miniconnect.dto.LoginRequestDTO;
 import dev.marcos.miniconnect.dto.RegisterRequestDTO;
 import dev.marcos.miniconnect.dto.UserResponseDTO;
+import dev.marcos.miniconnect.security.jwt.JwtUtils;
 import dev.marcos.miniconnect.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final JwtUtils jwtUtils;
 
     @PostMapping("/register")
     public ResponseEntity<UserResponseDTO> registerUser(@Valid @RequestBody RegisterRequestDTO signUpRequest) {
@@ -30,17 +34,30 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequestDTO loginRequest) {
-        ResponseCookie cookie = authService.login(loginRequest);
+        AuthCookies cookies = authService.login(loginRequest);
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .header(HttpHeaders.SET_COOKIE, cookies.jwtCookie().toString())
+                .header(HttpHeaders.SET_COOKIE, cookies.refreshCookie().toString())
                 .build();
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logoutUser() {
-        ResponseCookie cleanCookie = authService.signOut();
+        AuthCookies cleanCookies = authService.signOut();
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cleanCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, cleanCookies.jwtCookie().toString())
+                .header(HttpHeaders.SET_COOKIE, cleanCookies.refreshCookie().toString())
+                .build();
+    }
+
+    @PostMapping("/refreshtoken")
+    public ResponseEntity<Void> refreshToken(HttpServletRequest request) {
+        String refreshToken = jwtUtils.getJwtRefreshFromCookies(request);
+
+        ResponseCookie newJwtCookie = authService.refreshToken(refreshToken);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, newJwtCookie.toString())
                 .build();
     }
 }

@@ -1,9 +1,11 @@
 package dev.marcos.miniconnect.service;
 
+import dev.marcos.miniconnect.dto.AuthCookies;
 import dev.marcos.miniconnect.dto.LoginRequestDTO;
 import dev.marcos.miniconnect.dto.RegisterRequestDTO;
 import dev.marcos.miniconnect.dto.UserResponseDTO;
 import dev.marcos.miniconnect.exception.ResourceAlreadyExistsException;
+import dev.marcos.miniconnect.model.RefreshToken;
 import dev.marcos.miniconnect.model.User;
 import dev.marcos.miniconnect.repository.UserRepository;
 import dev.marcos.miniconnect.security.jwt.JwtUtils;
@@ -19,10 +21,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
+    private final RefreshTokenService refreshTokenService;
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -43,7 +48,7 @@ public class AuthService {
         return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getBio(), user.getBirthDate());
     }
 
-    public ResponseCookie login(LoginRequestDTO request) {
+    public AuthCookies login(LoginRequestDTO request) {
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
@@ -57,10 +62,40 @@ public class AuthService {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        return jwtUtils.generateJwtCookie(userDetails);
+        ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
+
+        refreshTokenService.deleteByUserId(userDetails.getId());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
+        ResponseCookie jwtRefreshCookie = jwtUtils.generateRefreshJwtCookie(refreshToken.getToken());
+
+        return new AuthCookies(jwtCookie, jwtRefreshCookie);
     }
 
-    public ResponseCookie signOut() {
-        return jwtUtils.getCleanJwtCookie();
+    public AuthCookies signOut() {
+        Object principle = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!principle.toString().equals("anonymousUser")) {
+            UUID userId = ((UserDetailsImpl) principle).getId();
+            refreshTokenService.deleteByUserId(userId);
+        }
+
+        ResponseCookie cleanJwtCookie = jwtUtils.getCleanJwtCookie();
+        ResponseCookie cleanRefreshCookie = jwtUtils.getCleanJwtRefreshCookie();
+
+        return new AuthCookies(cleanJwtCookie, cleanRefreshCookie);
+    }
+
+    public ResponseCookie refreshToken(String requestRefreshToken) {
+        if (requestRefreshToken == null || requestRefreshToken.isEmpty()) {
+            throw new IllegalArgumentException("Refresh Token não fornecido");
+        }
+
+        return refreshTokenService.findByToken(requestRefreshToken)
+                .map(refreshTokenService::verifyExpiration)
+                .map(RefreshToken::getUser)
+                .map(user -> {
+                    UserDetailsImpl userDetails = UserDetailsImpl.build(user);
+                    return jwtUtils.generateJwtCookie(userDetails);
+                })
+                .orElseThrow(() -> new IllegalArgumentException("Refresh token inválido ou não encontrado no banco de dados!"));
     }
 }

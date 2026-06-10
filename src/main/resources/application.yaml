@@ -13,3 +13,5 @@ spring:
       jwtCookieName: miniconnectapp
       jwtExpirationMs: 3000000
       jwtSecret: mySecretKey123912738aopsgjnspkmndfsopkvajoirjg94gf2opfng2moknm
+      jwtRefreshCookieName: miniconnectapp-refresh
+      jwtRefreshExpirationMs: 604800000

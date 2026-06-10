@@ -31,11 +31,14 @@ public class JwtUtils {
     @Value("${spring.miniconnect.app.jwtExpirationMs}")
     private int jwtExpirationMs;
 
+    @Value("${spring.miniconnect.app.jwtRefreshCookieName}")
+    private String jwtRefreshCookieName;
+
     @Value("${spring.miniconnect.app.jwtCookieName}")
-    private String jwtCookie;
+    private String jwtCookieName;
 
     public String getJwtFromCookies(HttpServletRequest request) {
-        Cookie cookie = WebUtils.getCookie(request, jwtCookie);
+        Cookie cookie = WebUtils.getCookie(request, jwtCookieName);
         if (cookie != null) {
             return cookie.getValue();
         }
@@ -44,23 +47,27 @@ public class JwtUtils {
 
     public ResponseCookie generateJwtCookie(UserDetailsImpl user) {
         String jwt = generateToken(user);
-        return ResponseCookie.from(jwtCookie, jwt)
-                .path("/api")
-                .maxAge(jwtExpirationMs / 1000)
-                .httpOnly(true)
-                .sameSite("Strict")
-                .secure(true)
-                .build();
+        return responseCookie(jwtCookieName, jwt, "/api", jwtExpirationMs / 1000);
     }
 
-    public String generateToken(UserDetailsImpl user) {
-        return Jwts.builder()
-                .subject(user.getId().toString())
-                .claim("name", user.getName())
-                .issuedAt(new Date())
-                .expiration(new Date(new Date().getTime() + jwtExpirationMs))
-                .signWith(key())
-                .compact();
+    public ResponseCookie getCleanJwtCookie() {
+        return responseCookie(jwtCookieName, "", "/api", 0);
+    }
+
+    public ResponseCookie generateRefreshJwtCookie(String refreshToken) {
+        return responseCookie(jwtRefreshCookieName, refreshToken, "/api/auth/refreshtoken", 24 * 60 * 60 * 7);
+    }
+
+    public ResponseCookie getCleanJwtRefreshCookie() {
+        return responseCookie(jwtRefreshCookieName, "", "/api/auth/refreshtoken", 0);
+    }
+
+    public String getJwtRefreshFromCookies(HttpServletRequest request) {
+        Cookie cookie = WebUtils.getCookie(request, jwtRefreshCookieName);
+        if (cookie != null) {
+            return cookie.getValue();
+        }
+        return null;
     }
 
     public String getUserIdFromJwtToken(String token) {
@@ -68,16 +75,6 @@ public class JwtUtils {
                 .verifyWith((SecretKey) key())
                 .build().parseSignedClaims(token)
                 .getPayload().getSubject();
-    }
-
-    public ResponseCookie getCleanJwtCookie() {
-        return ResponseCookie.from(jwtCookie, "")
-                .path("/api")
-                .maxAge(0)
-                .httpOnly(true)
-                .sameSite("Strict")
-                .secure(true)
-                .build();
     }
 
     public Key key() {
@@ -98,5 +95,28 @@ public class JwtUtils {
             logger.error("JWT claims string is empty: {}", e.getMessage());
         }
         return false;
+    }
+
+    private String generateToken(UserDetailsImpl user) {
+        return Jwts.builder()
+                .subject(user.getId().toString())
+                .claim("name", user.getName())
+                .issuedAt(new Date())
+                .expiration(new Date(new Date().getTime() + jwtExpirationMs))
+                .signWith(key())
+                .compact();
+    }
+
+    private ResponseCookie responseCookie(String cookieName,
+                                          String cookieValue,
+                                          String path,
+                                          long maxAge) {
+        return ResponseCookie.from(cookieName, cookieValue)
+                .path(path)
+                .maxAge(maxAge)
+                .httpOnly(true)
+                .sameSite("Strict")
+                .secure(true)
+                .build();
     }
 }
