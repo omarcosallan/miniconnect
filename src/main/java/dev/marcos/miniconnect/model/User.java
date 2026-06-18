@@ -55,4 +55,15 @@ public class User {
 
     @ManyToMany(mappedBy = "followers", fetch = FetchType.LAZY)
     private Set<User> following = new HashSet<>();
+
+    public void toggleFollowing(User targetUser) {
+        boolean wasRemoved = this.following.remove(targetUser);
+
+        if (wasRemoved) {
+            targetUser.getFollowers().remove(this);
+        } else {
+            this.following.add(targetUser);
+            targetUser.getFollowers().add(this);
+        }
+    }
 }
