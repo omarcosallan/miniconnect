@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
@@ -27,5 +29,10 @@ public class PostController {
     public ResponseEntity<PostResponseDTO> createPost(@Valid @RequestBody PostRequestDTO request) {
         PostResponseDTO createdPost = postService.createPost(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPost);
+    }
+
+    @PostMapping("/{postId}/like")
+    public ResponseEntity<PostResponseDTO> likePost(@PathVariable UUID postId) {
+        return ResponseEntity.ok(postService.likePost(postId));
     }
 }

@@ -15,6 +15,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -55,6 +57,31 @@ public class PostService {
                 user.getName(),
                 0L,
                 0L,
+                post.getCreatedAt()
+        );
+    }
+
+    @Transactional
+    public PostResponseDTO likePost(UUID postId) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder
+                .getContext().getAuthentication().getPrincipal();
+
+        User user = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("Post não encontrado."));
+
+        post.toggleLike(user);
+
+        postRepository.save(post);
+
+        return new PostResponseDTO(
+                post.getId(),
+                post.getContent(),
+                post.getUser().getName(),
+                (long) post.getLikes().size(),
+                (long) post.getComments().size(),
                 post.getCreatedAt()
         );
     }

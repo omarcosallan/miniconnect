@@ -42,4 +42,15 @@ public class Post {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User> likes = new HashSet<>();
+
+    public void toggleLike(User user) {
+        boolean wasRemoved = likes.remove(user);
+
+        if (wasRemoved) {
+            user.getLikes().remove(this);
+        } else {
+            likes.add(user);
+            user.getLikes().add(this);
+        }
+    }
 }

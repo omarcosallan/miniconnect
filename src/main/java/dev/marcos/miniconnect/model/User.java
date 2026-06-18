@@ -42,7 +42,7 @@ public class User {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Post> posts = new ArrayList<>();
 
-    @ManyToMany(mappedBy = "likes", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "likes", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     private Set<Post> likes = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
