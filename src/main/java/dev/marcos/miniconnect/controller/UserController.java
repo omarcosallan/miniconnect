@@ -15,7 +15,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/{userId}/profile")
+    @GetMapping("/{userId}")
     public ResponseEntity<ProfileDTO> profile(@PathVariable UUID userId) {
         return ResponseEntity.ok(userService.profile(userId));
     }
