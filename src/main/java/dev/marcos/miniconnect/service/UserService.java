@@ -1,5 +1,6 @@
 package dev.marcos.miniconnect.service;
 
+import dev.marcos.miniconnect.dto.PrivacyStatusResponseDTO;
 import dev.marcos.miniconnect.dto.ProfileDTO;
 import dev.marcos.miniconnect.exception.ResourceNotFoundException;
 import dev.marcos.miniconnect.model.User;
@@ -27,6 +28,7 @@ public class UserService {
                 user.getId(),
                 user.getName(),
                 user.getBio(),
+                user.getIsPrivate(),
                 user.getCreatedAt(),
                 user.getFollowersCount(),
                 user.getFollowingCount(),
@@ -52,5 +54,22 @@ public class UserService {
         follower.toggleFollowing(targetUser);
 
         userRepository.save(targetUser);
+    }
+
+    @Transactional
+    public PrivacyStatusResponseDTO togglePrivacy() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder
+                .getContext().getAuthentication().getPrincipal();
+
+        User user = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário logado não encontrado."));
+
+        user.setPrivate(!user.isPrivate());
+
+        userRepository.save(user);
+
+        String message = user.isPrivate() ? "ACCOUNT_PRIVACY_PRIVATE" : "ACCOUNT_PRIVACY_PUBLIC";
+
+        return new PrivacyStatusResponseDTO(user.isPrivate(), message);
     }
 }

@@ -8,6 +8,7 @@ public interface UserProfileProjection {
     UUID getId();
     String getName();
     String getBio();
+    boolean getIsPrivate();
     LocalDateTime getCreatedAt();
     Long getFollowersCount();
     Long getFollowingCount();

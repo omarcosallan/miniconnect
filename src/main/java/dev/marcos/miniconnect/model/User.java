@@ -36,6 +36,9 @@ public class User {
 
     private LocalDate birthDate;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean isPrivate = false;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

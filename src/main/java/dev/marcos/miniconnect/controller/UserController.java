@@ -1,5 +1,6 @@
 package dev.marcos.miniconnect.controller;
 
+import dev.marcos.miniconnect.dto.PrivacyStatusResponseDTO;
 import dev.marcos.miniconnect.dto.ProfileDTO;
 import dev.marcos.miniconnect.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -24,5 +25,10 @@ public class UserController {
     public ResponseEntity<Void> follow(@PathVariable UUID targetUserId) {
         userService.follow(targetUserId);
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/privacy")
+    public ResponseEntity<PrivacyStatusResponseDTO> privacy() {
+        return ResponseEntity.ok(userService.togglePrivacy());
     }
 }

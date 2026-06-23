@@ -18,6 +18,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
                 u.id AS id,
                 u.name AS name,
                 u.bio AS bio,
+                u.is_private AS isPrivate,
                 u.created_at AS createdAt,
                 (SELECT COUNT(*) FROM followers f WHERE f.followed_id = u.id) AS followersCount,
                 (SELECT COUNT(*) FROM followers f WHERE f.follower_id = u.id) AS followingCount,

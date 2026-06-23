@@ -7,6 +7,7 @@ public record ProfileDTO(
         UUID id,
         String name,
         String bio,
+        boolean isPrivate,
         LocalDateTime createdAt,
         Long followersCount,
         Long followingCount,
